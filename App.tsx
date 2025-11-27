@@ -5,8 +5,7 @@ import Generator from './pages/Generator';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import { User, GeneratedAsset, Transaction } from './types';
-import { api } from './services/mockApi';
-import { INITIAL_MODELS } from './constants';
+import { api } from './services/api'; // Changed from mockApi to real API
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -19,12 +18,27 @@ const App: React.FC = () => {
   // Load initial data when user logs in
   useEffect(() => {
     if (user) {
-      setAssets(api.getUserAssets(user.id));
-      setTransactions(api.getUserTransactions(user.id));
+      // Load user assets and transactions
+      loadUserData();
     }
   }, [user]);
 
+  const loadUserData = async () => {
+    try {
+      if (user) {
+        const userAssets = await api.getGeneratedAssets();
+        setAssets(userAssets || []);
+        
+        const userTransactions = await api.getUserTransactions(user.id);
+        setTransactions(userTransactions || []);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
   const handleLogout = () => {
+    api.removeToken(); // Clear token on logout
     setUser(null);
     setCurrentView('dashboard');
   };
@@ -39,7 +53,6 @@ const App: React.FC = () => {
         return (
           <Generator 
             user={user} 
-            models={INITIAL_MODELS} 
             onAssetGenerated={(newAsset) => setAssets([newAsset, ...assets])}
             onUpdateUser={setUser}
           />
