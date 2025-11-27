@@ -1,21 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AIModel, ModelType, User, GeneratedAsset } from '../types';
-import { api } from '../services/mockApi';
+import { api } from '../services/api'; // Changed from mockApi to real API
 import { Sparkles, Image as ImageIcon, Video as VideoIcon, Loader2, PlayCircle } from 'lucide-react';
 
 interface GeneratorProps {
   user: User;
-  models: AIModel[];
   onAssetGenerated: (asset: GeneratedAsset) => void;
   onUpdateUser: (user: User) => void;
 }
 
-const Generator: React.FC<GeneratorProps> = ({ user, models, onAssetGenerated, onUpdateUser }) => {
-  const [selectedModelId, setSelectedModelId] = useState<string>(models[0]?.id || '');
+const Generator: React.FC<GeneratorProps> = ({ user, onAssetGenerated, onUpdateUser }) => {
+  const [models, setModels] = useState<AIModel[]>([]);
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [lastResult, setLastResult] = useState<GeneratedAsset | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Load models on component mount
+  useEffect(() => {
+    loadModels();
+  }, []);
+
+  const loadModels = async () => {
+    try {
+      const loadedModels = await api.getModels();
+      setModels(loadedModels);
+      if (loadedModels.length > 0) {
+        setSelectedModelId(loadedModels[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading models:', error);
+      setError('Failed to load AI models');
+    }
+  };
 
   const selectedModel = models.find(m => m.id === selectedModelId);
 
@@ -27,14 +45,14 @@ const Generator: React.FC<GeneratorProps> = ({ user, models, onAssetGenerated, o
     setLastResult(null);
 
     try {
-      const result = await api.generateContent(user.id, selectedModelId, prompt);
+      const result = await api.generateContent(selectedModelId, prompt);
       
       // Update local state
       onAssetGenerated(result);
       setLastResult(result);
       
       // Refresh user to update credits
-      const updatedUser = await api.getUser(user.id);
+      const updatedUser = await api.getCurrentUser();
       if (updatedUser) onUpdateUser(updatedUser);
 
     } catch (err: any) {
