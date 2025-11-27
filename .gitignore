@@ -1,7 +1,28 @@
 ```
-# Documentation and installation files
-DEPLOYMENT_GUIDE.md
-README_INSTALL.md
-SOLUTION_SUMMARY.md
-install.sh
+# Dependencies
+backend/node_modules/
+node_modules/
+
+# Environment variables
+.env.local
+.env
+.env.*
+
+# Build artifacts and distributions
+backend/dist/
+backend/build/
+dist/
+build/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*~
 ```
